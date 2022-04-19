@@ -16,7 +16,7 @@ RLEList RLEListCreate()
     {
         return NULL;
     }
-    
+
     newList->letter = NULL;
     newList->numOfOcc = 0;
     newList->next_node = NULL;
@@ -39,11 +39,11 @@ RLEListResult RLEListAppend(RLEList list, char value)
     {
         return RLE_LIST_NULL_ARGUMENT;
     }
-    
+
     if (list->letter == value)
     {
         list->numOfOcc++;
-        
+
         return RLE_LIST_SUCCESS;
     }
 
@@ -58,7 +58,7 @@ RLEListResult RLEListAppend(RLEList list, char value)
         newNode->letter = value;
         newNode->numOfOcc = 1;
         RLEList current = list;
-        
+
         while (true)
         {
             if (current->next_node == NULL)
@@ -96,7 +96,7 @@ int RLEListSize(RLEList list)
 
 RLEListResult RLEListRemove(RLEList list, int index)
 {
-    int currentIndex = 0;
+    int currentIndex = 1;
     RLEList previous = list;
 
     if (index > RLEListSize(list))
@@ -115,18 +115,21 @@ RLEListResult RLEListRemove(RLEList list, int index)
         return RLE_LIST_SUCCESS;
     }
 
-    for (RLEList ptr = list; ptr != NULL; currentIndex++)
+    RLEList current = list;
+    while(true)
     {
-        previous = ptr;
-        ptr = list->next_node;
+        previous = current;
+        current = current->next_node;
         if (currentIndex == index)
         {
-            previous->next_node = ptr->next_node;
-            RLEListDestroy(ptr);
+            previous->next_node = current->next_node;
+            RLEListDestroy(current);
             return RLE_LIST_SUCCESS;
         }
+        currentIndex++;
     }
 }
+
 void print(RLEList list)
 {
     RLEList current = list->next_node;
@@ -147,7 +150,7 @@ int main()
     RLEListAppend(list, 'c');
     RLEListAppend(list, 'x');
     print(list);
-    RLEListRemove(list, 1);
+    RLEListRemove(list, 2);
     print(list);
     printf("size = %d", RLEListSize(list));
     return 0;
