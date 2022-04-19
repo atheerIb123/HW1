@@ -137,7 +137,7 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
         *result = RLE_LIST_NULL_ARGUMENT;
         return 0;
     }
-    
+
     if (index > RLEListSize(list) || index < 1)
     {
         *result = RLE_LIST_INDEX_OUT_OF_BOUNDS;
@@ -152,7 +152,7 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
         current = current->next_node;
         if (index == currentIndex)
         {
-            
+
             *result = RLE_LIST_SUCCESS;
             return current->letter;
         }
@@ -160,6 +160,38 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
     }
     return 0;
 }
+
+
+char* RLEListExportToString(RLEList list, RLEListResult* result)
+{
+    if (list == NULL)
+    {
+        *result = RLE_LIST_NULL_ARGUMENT;
+        return NULL;
+    }
+
+    int sizeOfList = RLEListSize(list);
+
+    char* string = (char*)malloc(sizeof(char) * 3 * sizeOfList + 1);
+
+    string[sizeOfList * 3] = '\0';
+    int stringIndex = 0;
+
+    RLEList current = list;
+
+    for (int i = 0; i < sizeOfList; i++)
+    {
+        current = current->next_node;
+        string[stringIndex] = current->letter;
+        string[stringIndex + 1] = current->numOfOcc;
+        string[stringIndex + 2] = '\n';
+        stringIndex += 3;
+    }
+
+    *result = RLE_LIST_SUCCESS;
+    return string;
+}
+
 void print(RLEList list)
 {
     RLEList current = list->next_node;
@@ -174,6 +206,7 @@ void print(RLEList list)
         current = current->next_node;
     }
 }
+
 int main()
 {
     RLEList list = RLEListCreate();
@@ -184,9 +217,10 @@ int main()
     RLEListAppend(list, 'h');
     RLEListAppend(list, 'e');
     RLEListAppend(list, 'r');
-    printf("%c",RLEListGet(list, 5, result_ptr));
-    printf("%d", result);
+    /*printf("%c", RLEListGet(list, 5, result_ptr));
+    printf("%d", result);*/
     RLEListRemove(list, 4);
+    printf("\nThe returned string = %s\n", RLEListExportToString);
     //print(list);
     //printf("size = %d", RLEListSize(list));
     return 0;
