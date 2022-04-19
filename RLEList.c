@@ -161,6 +161,11 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
     return 0;
 }
 
+char convertIntToChar(int value)
+{
+    char letter = value + '0';
+    return letter;
+}
 
 char* RLEListExportToString(RLEList list, RLEListResult* result)
 {
@@ -183,7 +188,7 @@ char* RLEListExportToString(RLEList list, RLEListResult* result)
     {
         current = current->next_node;
         string[stringIndex] = current->letter;
-        string[stringIndex + 1] = current->numOfOcc;
+        string[stringIndex + 1] = convertIntToChar(current->numOfOcc);
         string[stringIndex + 2] = '\n';
         stringIndex += 3;
     }
@@ -220,7 +225,7 @@ int main()
     /*printf("%c", RLEListGet(list, 5, result_ptr));
     printf("%d", result);*/
     RLEListRemove(list, 4);
-    printf("\nThe returned string = %s\n", RLEListExportToString);
+    printf("\nThe returned string = %s\n", RLEListExportToString(list, result_ptr));
     //print(list);
     //printf("size = %d", RLEListSize(list));
     return 0;
