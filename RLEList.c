@@ -4,7 +4,7 @@ struct RLEList_t {
     //TODO: implement
     char letter;
     int numOfOcc;
-    RLEList* next_node;
+    RLEList next_node;
 };
 
 //implement the functions here
@@ -57,14 +57,13 @@ RLEListResult RLEListAppend(RLEList list, char value)
 
         newNode->letter = value;
         newNode->numOfOcc = 1;
-        newNode->next_node = NULL;
         RLEList current = list;
+        
         while (true)
         {
             if (current->next_node == NULL)
             {
                 current->next_node = newNode;
-                printf("ahh");
                 break;
             }
             current = current->next_node;
@@ -81,12 +80,17 @@ int RLEListSize(RLEList list)
     {
         return -1;
     }
+    RLEList current = list;
 
-    for (RLEList ptr = list; ptr != NULL; ptr = list->next_node)
+    while (true)
     {
+        if (current->next_node == NULL)
+        {
+            break;
+        }
         counter++;
+        current = current->next_node;
     }
-
     return counter;
 }
 
@@ -125,17 +129,25 @@ RLEListResult RLEListRemove(RLEList list, int index)
 }
 void print(RLEList list)
 {
-    for (RLEList ptr = list; ptr != NULL; ptr = list->next_node)
-    {
-        printf("%c ", ptr->letter);
-    }
+    RLEList current = list->next_node;
 
+    while (true)
+    {
+        if (current == NULL)
+        {
+            break;
+        }
+        printf("~ %c\n", current->letter);
+        current = current->next_node;
+    }
 }
 int main()
 {
     RLEList list = RLEListCreate();
     RLEListAppend(list, 'c');
     RLEListAppend(list, 'x');
+    print(list);
+    RLEListRemove(list, 1);
     print(list);
     printf("size = %d", RLEListSize(list));
     return 0;
