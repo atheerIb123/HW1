@@ -10,7 +10,7 @@ struct RLEList_t {
 //implement the functions here
 RLEList RLEListCreate()
 {
-    RLEList newList = (RLEList)malloc(sizeof(RLEList));
+    RLEList newList = (RLEList)malloc(sizeof(*newList));
 
     if (newList == NULL)
     {
@@ -116,20 +116,50 @@ RLEListResult RLEListRemove(RLEList list, int index)
     }
 
     RLEList current = list;
-    while(true)
+    while (true)
     {
         previous = current;
         current = current->next_node;
         if (currentIndex == index)
         {
             previous->next_node = current->next_node;
-            RLEListDestroy(current);
+            free(current);
             return RLE_LIST_SUCCESS;
         }
         currentIndex++;
     }
 }
 
+char RLEListGet(RLEList list, int index, RLEListResult* result)
+{
+    if (list == NULL)
+    {
+        *result = RLE_LIST_NULL_ARGUMENT;
+        return 0;
+    }
+    
+    if (index > RLEListSize(list) || index < 1)
+    {
+        *result = RLE_LIST_INDEX_OUT_OF_BOUNDS;
+
+        return 0;
+    }
+
+    int currentIndex = 1;
+    RLEList current = list;
+    while (true)
+    {
+        current = current->next_node;
+        if (index == currentIndex)
+        {
+            
+            *result = RLE_LIST_SUCCESS;
+            return current->letter;
+        }
+        currentIndex++;
+    }
+    return 0;
+}
 void print(RLEList list)
 {
     RLEList current = list->next_node;
@@ -147,11 +177,17 @@ void print(RLEList list)
 int main()
 {
     RLEList list = RLEListCreate();
-    RLEListAppend(list, 'c');
-    RLEListAppend(list, 'x');
-    print(list);
-    RLEListRemove(list, 2);
-    print(list);
-    printf("size = %d", RLEListSize(list));
+    RLEListResult result;
+    RLEListResult* result_ptr = &result;
+    RLEListAppend(list, 'z');
+    RLEListAppend(list, 'a');
+    RLEListAppend(list, 'h');
+    RLEListAppend(list, 'e');
+    RLEListAppend(list, 'r');
+    printf("%c",RLEListGet(list, 5, result_ptr));
+    printf("%d", result);
+    RLEListRemove(list, 4);
+    //print(list);
+    //printf("size = %d", RLEListSize(list));
     return 0;
 }
