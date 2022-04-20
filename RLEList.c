@@ -7,6 +7,15 @@ struct RLEList_t {
     RLEList next_node;
 };
 
+bool isListEmpty(RLEList list)
+{
+    if (list->next_node == NULL)
+    {
+        return true;
+    }
+    return false;
+}
+
 //implement the functions here
 RLEList RLEListCreate()
 {
@@ -18,7 +27,7 @@ RLEList RLEListCreate()
     }
 
     newList->letter = NULL;
-    newList->numOfOcc = 0;
+    newList->numOfOcc = NULL;
     newList->next_node = NULL;
 
     return newList;
@@ -30,12 +39,14 @@ void RLEListDestroy(RLEList list)
     {
         return;
     }
-    free(list);
+    while (list)
+    {
+        RLEList toDelete = list;
+        list = list->next_node;
+        free(toDelete);
+    }
 }
-RLEList FindNodeByValue(RLEList list, char value)
-{
 
-}
 
 RLEListResult RLEListAppend(RLEList list, char value)
 {
@@ -97,61 +108,76 @@ int RLE_numOfNodes(RLEList list)
 RLEListResult RLEListRemove(RLEList list, int index)
 {
     index++;
-    int currentIndex = 1;
-    RLEList previous = list;
 
-    if (index > RLE_numOfNodes(list))
-    {
-        return RLE_LIST_INDEX_OUT_OF_BOUNDS;
-    }
-
-    if (list == NULL || index == NULL)
+    if (list == NULL)
     {
         return RLE_LIST_NULL_ARGUMENT;
     }
 
-    if (RLE_numOfNodes(list) == 1)
+    if (index > RLEListSize(list) || index < 1)
     {
-        RLEListDestroy(list);
-        return RLE_LIST_SUCCESS;
+        return RLE_LIST_INDEX_OUT_OF_BOUNDS;
     }
 
+    int currentIndex = 1;
     RLEList current = list;
+
     while (true)
     {
-        previous = current;
+        RLEList previous = current;
         current = current->next_node;
 
-        if (currentIndex == index)
+        for (int i = current->numOfOcc; i > 0; i--)
         {
-            if(previous->letter != current->next_node->letter)
+            if (index == currentIndex)
             {
-                if(current->numOfOcc == 1)
+                if (current->numOfOcc > 1)
                 {
-                    if(previous->letter != current->next_node->letter)
-                    {
-                        previous->next_node = current->next_node;
-                        free(current);
-                    }
-                    else
-                    {
-
-                    }
+                    current->numOfOcc--;
+                    return RLE_LIST_SUCCESS;
                 }
                 else
                 {
-                    current->numOfOcc--;
+                    if (current->next_node != NULL)
+                    {
+                        if (previous->letter != current->next_node->letter)
+                        {
+                            previous->next_node = current->next_node;
+                            free(current);
+                            return RLE_LIST_SUCCESS;
+                        }
+                        else
+                        {
+                            previous->numOfOcc += current->next_node->numOfOcc;
+                            if (current->next_node->next_node != NULL)
+                            {
+                                previous->next_node = current->next_node->next_node;
+                                free(current);
+                                return RLE_LIST_SUCCESS;
+                            }
+                            else
+                            {
+                                previous->next_node = NULL;
+                                free(current);
+                                return RLE_LIST_SUCCESS;
+                            }
+                        }
+                        
+                    }
+                    else
+                    {
+                        previous->next_node = NULL;
+                        free(current);
+                        return RLE_LIST_SUCCESS;
+                    }
                 }
             }
-            else
-            {
-                
-            }
-            return RLE_LIST_SUCCESS;
+            currentIndex++;
         }
-        currentIndex++;
     }
 }
+
+
 
 char RLEListGet(RLEList list, int index, RLEListResult* result)
 {
@@ -162,7 +188,7 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
         return 0;
     }
 
-    if (index > RLE_numOfNodes(list) || index < 1)
+    if (index > RLEListSize(list) || index < 1)
     {
         result = RLE_LIST_INDEX_OUT_OF_BOUNDS;
 
@@ -171,16 +197,19 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
 
     int currentIndex = 1;
     RLEList current = list;
+
     while (true)
     {
         current = current->next_node;
-        if (index == currentIndex)
+        for (int i = current->numOfOcc; i > 0; i--)
         {
-
-            result = RLE_LIST_SUCCESS;
-            return current->letter;
+            if (index == currentIndex)
+            {
+                result = RLE_LIST_SUCCESS;
+                return current->letter;
+            }
+            currentIndex++;
         }
-        currentIndex++;
     }
     return 0;
 }
@@ -199,6 +228,7 @@ int RLEListSize(RLEList list)
     }
     return size;
 }
+
 char convertIntToChar(int value)
 {
     char ch = value + '0';
@@ -239,25 +269,33 @@ RLEListResult RLEListMap(RLEList list, MapFunction map_function)
     {
         return RLE_LIST_NULL_ARGUMENT;
     }
+
     RLEList current = list;
+    
     while (current->next_node != NULL)
     {
         current = current->next_node;
         current->letter = map_function(current->letter);
     }
+
     return RLE_LIST_SUCCESS;
 }
 void print(RLEList list)
 {
+    if (list == NULL)
+    {
+        printf("The list is empty\n");
+        return;
+    }
     RLEList current = list->next_node;
-
+    
     while (true)
     {
         if (current == NULL)
         {
             break;
         }
-        printf("~ %c\n", current->letter);
+        printf("~ %c %d\n", current->letter, current->numOfOcc);
         current = current->next_node;
     }
 }
