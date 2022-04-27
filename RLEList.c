@@ -1,15 +1,12 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "RLEList.h"
-#include "AsciiArtTool.h"
 
 struct RLEList_t {
-    //TODO: implement
     char letter;
     int numOfOcc;
     RLEList next_node;
 };
 
-bool isListEmpty(RLEList list)
+static bool isListEmpty(RLEList list)
 {
     if (list->next_node == NULL)
     {
@@ -28,8 +25,8 @@ RLEList RLEListCreate()
         return NULL;
     }
 
-    newList->letter = NULL;
-    newList->numOfOcc = NULL;
+    newList->letter = '\0';
+    newList->numOfOcc = 0;
     newList->next_node = NULL;
 
     return newList;
@@ -52,7 +49,7 @@ void RLEListDestroy(RLEList list)
 
 RLEListResult RLEListAppend(RLEList list, char value)
 {
-    if (list == NULL || value == NULL)
+    if (list == NULL || value == '\0')
     {
         return RLE_LIST_NULL_ARGUMENT;
     }
@@ -186,14 +183,19 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
     index++;
     if (list == NULL)
     {
-        result = RLE_LIST_NULL_ARGUMENT;
+        if(result != NULL)
+        {
+            *result = RLE_LIST_NULL_ARGUMENT;
+        }
         return 0;
     }
 
     if (index > RLEListSize(list) || index < 1)
     {
-        result = RLE_LIST_INDEX_OUT_OF_BOUNDS;
-
+        if(result != NULL)
+        {
+            *result = RLE_LIST_INDEX_OUT_OF_BOUNDS;
+        }
         return 0;
     }
 
@@ -207,7 +209,10 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
         {
             if (index == currentIndex)
             {
-                result = RLE_LIST_SUCCESS;
+                if (result != NULL)
+                {
+                    *result = RLE_LIST_SUCCESS;
+                }
                 return current->letter;
             }
             currentIndex++;
@@ -238,18 +243,17 @@ char convertIntToChar(int value)
 }
 char* RLEListExportToString(RLEList list, RLEListResult* result)
 {
-    if (list == NULL)
+    if (list == NULL || *result == NULL)
     {
         *result = RLE_LIST_NULL_ARGUMENT;
         return NULL;
     }
 
     int sizeOfList = RLE_numOfNodes(list);
-
+    int stringIndex = 0;
     char* string = (char*)malloc(sizeof(char) * 3 * sizeOfList + 1);
 
     string[sizeOfList * 3] = '\0';
-    int stringIndex = 0;
 
     RLEList current = list;
 
@@ -257,7 +261,7 @@ char* RLEListExportToString(RLEList list, RLEListResult* result)
     {
         current = current->next_node;
         string[stringIndex] = current->letter;
-        string[stringIndex + 1] = convertIntToChar(current->numOfOcc);
+        string[stringIndex + 1] = convertIntToChar(current->numOfOcc);          
         string[stringIndex + 2] = '\n';
         stringIndex += 3;
     }
@@ -282,37 +286,23 @@ RLEListResult RLEListMap(RLEList list, MapFunction map_function)
 
     return RLE_LIST_SUCCESS;
 }
-void print(RLEList list)
-{
-    if (list == NULL)
-    {
-        printf("The list is empty\n");
-        return;
-    }
-    RLEList current = list->next_node;
-    
-    while (true)
-    {
-        if (current == NULL)
-        {
-            break;
-        }
-        printf("~ %c %d\n", current->letter, current->numOfOcc);
-        current = current->next_node;
-    }
-}
 //
-//int main()
+//static void print(RLEList list)
 //{
-//    FILE* in_stream = fopen("dog.txt", "r");
-//    if (in_stream == NULL)
+//    if (list == NULL)
 //    {
-//        printf("Couldn't open file\n");
+//        printf("The list is empty\n");
+//        return;
 //    }
-//    FILE* out_stream = fopen("dog_output_ENC.txt", "w");
-//    RLEList list = asciiArtRead(in_stream);
-//    printf("\nResult = %d\n", asciiArtPrintEncoded(list, out_stream));
-//    print(list);
-//    fclose(in_stream);
-//    return 0;
+//    RLEList current = list->next_node;
+//    
+//    while (true)
+//    {
+//        if (current == NULL)
+//        {
+//            break;
+//        }
+//        printf("~ %c %d\n", current->letter, current->numOfOcc);
+//        current = current->next_node;
+//    }
 //}
