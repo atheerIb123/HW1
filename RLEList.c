@@ -220,6 +220,7 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
     }
     return 0;
 }
+
 int RLEListSize(RLEList list)
 {
     if (list == NULL)
@@ -241,34 +242,72 @@ char convertIntToChar(int value)
     char ch = value + '0';
     return ch;
 }
+
 char* RLEListExportToString(RLEList list, RLEListResult* result)
 {
-    if (list == NULL || *result == NULL)
+    if (list == NULL)
     {
         *result = RLE_LIST_NULL_ARGUMENT;
         return NULL;
     }
 
-    int sizeOfList = RLE_numOfNodes(list);
     int stringIndex = 0;
+    int sizeOfList = RLEListSize(list);
     char* string = (char*)malloc(sizeof(char) * 3 * sizeOfList + 1);
-
-    string[sizeOfList * 3] = '\0';
 
     RLEList current = list;
 
-    for (int i = 0; i < sizeOfList; i++)
+    char str[10];
+    for (RLEList current = list->next_node; current != NULL; current = current->next_node)
     {
-        current = current->next_node;
-        string[stringIndex] = current->letter;
-        string[stringIndex + 1] = convertIntToChar(current->numOfOcc);          
-        string[stringIndex + 2] = '\n';
-        stringIndex += 3;
+        string[stringIndex++] = current->letter;
+        sprintf(str, "%d", current->numOfOcc);
+
+        for(int i = 0 ; i < strlen(str); i++)
+        {
+            string[stringIndex++] = str[i];
+        }
+
+        string[stringIndex++] = '\n';
+    }
+    string[stringIndex] = '\0';
+
+    if (result != NULL)
+    {
+        *result = RLE_LIST_SUCCESS;
     }
 
-    *result = RLE_LIST_SUCCESS;
     return string;
+}//a1a2a1b1     //a3a1b
+
+void mergeNodes(RLEList list)
+{
+    RLEList current = list;
+    RLEList previous = current;
+    while (current->next_node != NULL)
+    {
+        current = current->next_node;
+        if (previous->letter == current->letter)
+        {
+            previous->numOfOcc += current->numOfOcc;
+            if (current->next_node != NULL)
+            {
+                previous->next_node = current->next_node;
+
+            }
+            else
+            {
+                previous->next_node = NULL;
+            }
+
+        }//a1a2a1b1 -> a3a1b1
+        if (previous->next_node->letter != previous->letter)
+        {
+            previous = previous->next_node;
+        }
+    }
 }
+
 RLEListResult RLEListMap(RLEList list, MapFunction map_function)
 {
     if (list == NULL || map_function == NULL)
@@ -278,31 +317,15 @@ RLEListResult RLEListMap(RLEList list, MapFunction map_function)
 
     RLEList current = list;
     
-    while (current->next_node != NULL)
+    while (current != NULL)
     {
-        current = current->next_node;
-        current->letter = map_function(current->letter);
+        if(current->next_node != NULL)
+        {
+            current = current->next_node;
+            current->letter = map_function(current->letter);
+            mergeNodes(list);
+        }
     }
 
     return RLE_LIST_SUCCESS;
 }
-//
-//static void print(RLEList list)
-//{
-//    if (list == NULL)
-//    {
-//        printf("The list is empty\n");
-//        return;
-//    }
-//    RLEList current = list->next_node;
-//    
-//    while (true)
-//    {
-//        if (current == NULL)
-//        {
-//            break;
-//        }
-//        printf("~ %c %d\n", current->letter, current->numOfOcc);
-//        current = current->next_node;
-//    }
-//}
