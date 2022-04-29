@@ -6,15 +6,6 @@ struct RLEList_t {
     RLEList next_node;
 };
 
-static bool isListEmpty(RLEList list)
-{
-    if (list->next_node == NULL)
-    {
-        return true;
-    }
-    return false;
-}
-
 //implement the functions here
 RLEList RLEListCreate()
 {
@@ -254,16 +245,14 @@ char* RLEListExportToString(RLEList list, RLEListResult* result)
     int stringIndex = 0;
     int sizeOfList = RLEListSize(list);
     char* string = (char*)malloc(sizeof(char) * 3 * sizeOfList + 1);
-
-    RLEList current = list;
-
     char str[10];
+
     for (RLEList current = list->next_node; current != NULL; current = current->next_node)
     {
         string[stringIndex++] = current->letter;
         sprintf(str, "%d", current->numOfOcc);
 
-        for(int i = 0 ; i < strlen(str); i++)
+        for(int i = 0 ; str[i] != '\0' ; i++)
         {
             string[stringIndex++] = str[i];
         }
@@ -278,33 +267,46 @@ char* RLEListExportToString(RLEList list, RLEListResult* result)
     }
 
     return string;
-}//a1a2a1b1     //a3a1b
+}
 
 void mergeNodes(RLEList list)
 {
-    RLEList current = list;
-    RLEList previous = current;
-    while (current->next_node != NULL)
+    if (list->next_node == NULL)
     {
-        current = current->next_node;
-        if (previous->letter == current->letter)
+        return;
+    }
+
+    RLEList current = list->next_node;
+    RLEList previous = list;
+
+    while (current->next_node != NULL && previous->next_node != NULL)
+    {
+        if (current->letter == previous->letter)
         {
             previous->numOfOcc += current->numOfOcc;
             if (current->next_node != NULL)
             {
-                previous->next_node = current->next_node;
-
+                current = current->next_node;
+                free(previous->next_node);
+                previous->next_node = current;
             }
             else
             {
                 previous->next_node = NULL;
+                free(current);
+                break;
             }
-
-        }//a1a2a1b1 -> a3a1b1
-        if (previous->next_node->letter != previous->letter)
-        {
+        }
+        else {
+            current = current->next_node;
             previous = previous->next_node;
         }
+    }
+    if (previous->letter == current->letter)
+    {
+        previous->numOfOcc += current->numOfOcc;
+        previous->next_node = NULL;
+        free(current);
     }
 }
 
@@ -316,16 +318,21 @@ RLEListResult RLEListMap(RLEList list, MapFunction map_function)
     }
 
     RLEList current = list;
-    
-    while (current != NULL)
+
+    while (current->next_node != NULL)
     {
-        if(current->next_node != NULL)
+        if (current->next_node != NULL)
         {
             current = current->next_node;
             current->letter = map_function(current->letter);
-            mergeNodes(list);
+        }
+        else
+        {
+            current->letter = map_function(current->letter);
         }
     }
+
+    mergeNodes(list);
 
     return RLE_LIST_SUCCESS;
 }
