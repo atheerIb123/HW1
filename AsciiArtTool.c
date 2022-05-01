@@ -18,8 +18,9 @@ RLEList asciiArtRead(FILE* in_stream)
 RLEListResult asciiArtPrint(RLEList list, FILE* out_stream)
 {
 	RLEListResult result = 0;
+	int size = RLEListSize(list);
 
-	for (int i = 0; i < RLEListSize(list); i++)
+	for (int i = 0; i < size; i++)
 	{
 		char ch = RLEListGet(list, i, &result);
 		fputc(ch, out_stream);

@@ -3,10 +3,9 @@
 struct RLEList_t {
     char value;
     int occurrences;
-    RLEList next_node;
+    RLEList next;
 };
 
-//implement the functions here
 RLEList RLEListCreate()
 {
     RLEList newList = (RLEList)malloc(sizeof(*newList));
@@ -18,7 +17,7 @@ RLEList RLEListCreate()
 
     newList->value = '\0';
     newList->occurrences = 0;
-    newList->next_node = NULL;
+    newList->next = NULL;
 
     return newList;
 }
@@ -29,10 +28,11 @@ void RLEListDestroy(RLEList list)
     {
         return;
     }
+ 
     while (list)
     {
         RLEList toDelete = list;
-        list = list->next_node;
+        list = list->next;
         free(toDelete);
     }
 }
@@ -48,9 +48,9 @@ RLEListResult RLEListAppend(RLEList list, char value)
 
     RLEList current = list;
 
-    while (current->next_node != NULL)
+    while (current->next != NULL)
     {
-        current = current->next_node;
+        current = current->next;
     }
     if (current->value == value)
     {
@@ -67,56 +67,31 @@ RLEListResult RLEListAppend(RLEList list, char value)
 
         newNode->value = value;
         newNode->occurrences = 1;
-        current->next_node = newNode;
+        current->next = newNode;
     }
+
     return RLE_LIST_SUCCESS;
-}
-
-
-int RLE_numOfNodes(RLEList list)
-{
-    int counter = 0;
-
-    if (list == NULL)
-    {
-        return -1;
-    }
-    RLEList current = list;
-
-    while (true)
-    {
-        if (current->next_node == NULL)
-        {
-            break;
-        }
-        counter++;
-        current = current->next_node;
-    }
-    return counter;
 }
 
 RLEListResult RLEListRemove(RLEList list, int index)
 {
-    index++;
 
     if (list == NULL)
     {
         return RLE_LIST_NULL_ARGUMENT;
     }
 
-    if (index > RLEListSize(list) || index < 1)
+    if (index >= RLEListSize(list) || index < 0)
     {
         return RLE_LIST_INDEX_OUT_OF_BOUNDS;
     }
 
-    int currentIndex = 1;
-    RLEList current = list;
+    int currentIndex = 0;
+    RLEList current = list->next;
+    RLEList previous = list;
 
-    while (true)
+    while (current != NULL)
     {
-        RLEList previous = current;
-        current = current->next_node;
-
         for (int i = current->occurrences; i > 0; i--)
         {
             if (index == currentIndex)
@@ -126,48 +101,47 @@ RLEListResult RLEListRemove(RLEList list, int index)
                     current->occurrences--;
                     return RLE_LIST_SUCCESS;
                 }
-                else
+
+                if (current->next != NULL && current->next->value != previous->value)
                 {
-                    if (current->next_node != NULL)
+                    previous->next = current->next;
+                    free(current);
+                    return RLE_LIST_SUCCESS;
+                }
+                else if (current->next == NULL)
+                {
+                    free(current);
+                    previous->next = NULL;
+                    return RLE_LIST_SUCCESS;
+                }
+                else if (current->next != NULL && current->next->value == previous->value)
+                {
+                    previous->occurrences += current->next->occurrences;
+
+                    if (current->next->next != NULL)
                     {
-                        if (previous->value != current->next_node->value)
-                        {
-                            previous->next_node = current->next_node;
-                            free(current);
-                            return RLE_LIST_SUCCESS;
-                        }
-                        else
-                        {
-                            previous->occurrences += current->next_node->occurrences;
-                            if (current->next_node->next_node != NULL)
-                            {
-                                previous->next_node = current->next_node->next_node;
-                                free(current);
-                                return RLE_LIST_SUCCESS;
-                            }
-                            else
-                            {
-                                previous->next_node = NULL;
-                                free(current);
-                                return RLE_LIST_SUCCESS;
-                            }
-                        }
-                        
+                        previous->next = current->next->next;
+                        free(current->next);
+                        free(current);
+                        return RLE_LIST_SUCCESS;
                     }
                     else
                     {
-                        previous->next_node = NULL;
+                        free(current->next);
                         free(current);
+                        previous->next = NULL;
                         return RLE_LIST_SUCCESS;
                     }
                 }
             }
             currentIndex++;
         }
+
+        current = current->next;
+        previous = previous->next;
     }
+    return RLE_LIST_SUCCESS;
 }
-
-
 
 char RLEListGet(RLEList list, int index, RLEListResult* result)
 {
@@ -190,24 +164,21 @@ char RLEListGet(RLEList list, int index, RLEListResult* result)
         return 0;
     }
 
-    int currentIndex = 1;
-    RLEList current = list->next_node;
+    int currentIndex = 0;
+    RLEList current = list->next;
 
     while (current != NULL)
     {
-        for (int i = current->occurrences; i > 0; i--)
+        currentIndex += current->occurrences;
+        if (currentIndex >= index)
         {
-            if (index == currentIndex)
+            if (result != NULL)
             {
-                if (result != NULL)
-                {
-                    *result = RLE_LIST_SUCCESS;
-                }
-                return current->value;
+                *result = RLE_LIST_SUCCESS;
             }
-            currentIndex++;
+            return current->value;
         }
-        current = current->next_node;
+        current = current->next;
     }
     return 0;
 }
@@ -219,13 +190,12 @@ int RLEListSize(RLEList list)
         return -1;
     }
 
-    RLEList current = list;
     int size = 0;
 
-    while (current->next_node != NULL)
+    while (list->next != NULL)
     {
-        current = current->next_node;
-        size += current->occurrences;
+        list = list->next;
+        size += list->occurrences;
     }
 
     return size;
@@ -233,29 +203,35 @@ int RLEListSize(RLEList list)
 
 char* RLEListExportToString(RLEList list, RLEListResult* result)
 {
-    if (list == NULL)
+    if (list == NULL && result != NULL)
     {
         *result = RLE_LIST_NULL_ARGUMENT;
         return NULL;
     }
+   
+    RLEList current = list->next;
+    int size = RLEListSize(list);
+    char* string = (char*)malloc(3 * (size + 1));
+
+    if (string == NULL)
+    {
+        if (result != NULL)
+        {
+            *result = RLE_LIST_OUT_OF_MEMORY;
+        }
+        return NULL;
+    }
 
     int stringIndex = 0;
-    int sizeOfList = RLEListSize(list);
-    char* string = (char*)malloc(sizeof(char) * 3 * sizeOfList + 1);
-    char str[10];
 
-    for (RLEList current = list->next_node; current != NULL; current = current->next_node)
+    while (current != NULL)
     {
-        string[stringIndex++] = current->value;
-        sprintf(str, "%d", current->occurrences);
-
-        for(int i = 0 ; str[i] != '\0' ; i++)
-        {
-            string[stringIndex++] = str[i];
-        }
-
-        string[stringIndex++] = '\n';
+        string[stringIndex] = current->value;
+        stringIndex += sprintf(string + stringIndex + 1, "%d\n", current->occurrences);
+        stringIndex++;
+        current = current->next;
     }
+
     string[stringIndex] = '\0';
 
     if (result != NULL)
@@ -268,41 +244,41 @@ char* RLEListExportToString(RLEList list, RLEListResult* result)
 
 static void mergeNodes(RLEList list)
 {
-    if (list->next_node == NULL)
+    if (list->next == NULL)
     {
         return;
     }
 
-    RLEList current = list->next_node;
+    RLEList current = list->next;
     RLEList previous = list;
 
-    while (current->next_node != NULL && previous->next_node != NULL)
+    while (current->next != NULL && previous->next != NULL)
     {
         if (current->value == previous->value)
         {
             previous->occurrences += current->occurrences;
-            if (current->next_node != NULL)
+            if (current->next != NULL)
             {
-                current = current->next_node;
-                free(previous->next_node);
-                previous->next_node = current;
+                current = current->next;
+                free(previous->next);
+                previous->next = current;
             }
             else
             {
-                previous->next_node = NULL;
+                previous->next = NULL;
                 free(current);
                 break;
             }
         }
         else {
-            current = current->next_node;
-            previous = previous->next_node;
+            current = current->next;
+            previous = previous->next;
         }
     }
     if (previous->value == current->value)
     {
         previous->occurrences += current->occurrences;
-        previous->next_node = NULL;
+        previous->next = NULL;
         free(current);
     }
 }
@@ -316,11 +292,11 @@ RLEListResult RLEListMap(RLEList list, MapFunction map_function)
 
     RLEList current = list;
 
-    while (current->next_node != NULL)
+    while (current->next != NULL)
     {
-        if (current->next_node != NULL)
+        if (current->next != NULL)
         {
-            current = current->next_node;
+            current = current->next;
             current->value = map_function(current->value);
         }
         else

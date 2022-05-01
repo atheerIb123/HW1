@@ -4,10 +4,12 @@
 
 #ifndef HW1_RLELIST_H
 #define HW1_RLELIST_H
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+
 /**
 * Run Length Encoding List
 *
